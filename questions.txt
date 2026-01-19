@@ -1,0 +1,137 @@
+Wireless Modulation Simulator - Review Questions
+================================================
+
+These questions are designed to reinforce concepts from the simulator.
+Answer them after experimenting with different modulation schemes and SNR values.
+
+
+QUESTIONS
+---------
+
+Q1. (T/F) QPSK achieves twice the data rate of BPSK while having the same
+    Bit Error Rate (BER) performance at a given Eb/N0.
+
+    Verify: Compare BER curves for BPSK and QPSK at the same SNR
+
+
+Q2. (MCQ) How many bits are transmitted per symbol in 64-QAM?
+    A) 4 bits
+    B) 6 bits
+    C) 8 bits
+    D) 64 bits
+
+    Verify: Check the statistics panel when 64-QAM is selected
+
+
+Q3. (T/F) At the same Eb/N0, 16-QAM has a lower BER than QPSK.
+
+    Verify: Compare the BER curves or theoretical BER values at 10 dB
+
+
+Q4. (MCQ) What happens to the received constellation diagram as you decrease the SNR?
+    A) Points cluster more tightly around ideal positions
+    B) Points scatter more widely around ideal positions
+    C) The number of constellation points decreases
+    D) The constellation rotates
+
+    Verify: Adjust SNR slider from 15 dB down to 5 dB and observe
+
+
+Q5. (T/F) The bandwidth of a digitally modulated signal depends primarily on the
+    symbol rate (1/T), not on whether you use QPSK or 64-QAM.
+
+    Verify: Switch between modulation schemes and observe the frequency spectrum
+
+
+Q6. (MCQ) In 8-PSK, all constellation points lie on a circle because:
+    A) All symbols have the same amplitude but different phases
+    B) All symbols have the same phase but different amplitudes
+    C) It uses only the I channel
+    D) It requires less bandwidth than QAM
+
+    Verify: Observe the 8-PSK constellation diagram and passband waveforms
+
+
+Q7. (T/F) To achieve a BER of 10^-5, 64-QAM requires approximately 6 dB higher
+    Eb/N0 than QPSK.
+
+    Verify: Find where each BER curve crosses 10^-5 on the BER plot
+
+
+Q8. (MCQ) Gray coding is used in constellation mapping because:
+    A) It maximizes the data rate
+    B) Adjacent symbols differ by only one bit, minimizing bit errors when symbol errors occur
+    C) It reduces the required bandwidth
+    D) It eliminates the need for the Q channel
+
+    Verify: Examine bit labels on adjacent constellation points (e.g., in QPSK: 00, 01, 11, 10)
+
+
+Q9. (T/F) Raised cosine pulse shaping reduces the signal bandwidth compared to
+    rectangular pulses, which helps minimize interference with adjacent channels.
+
+    Verify: Toggle between Rectangular and Raised Cosine and compare the frequency spectrum width
+
+
+Q10. (MCQ) If you've transmitted 50,000 bits and observed 50 bit errors, what is
+     the simulated BER?
+     A) 10^-2
+     B) 10^-3
+     C) 10^-4
+     D) 10^-5
+
+     Verify: Run simulation until ~50,000 bits and check the statistics panel calculation
+
+
+================================================================================
+ANSWERS
+================================================================================
+
+Q1.  TRUE
+     Explanation: QPSK uses orthogonal I/Q channels, each performing like BPSK.
+     This doubles the data rate (2 bits/symbol vs 1 bit/symbol) without
+     sacrificing BER performance.
+
+Q2.  B) 6 bits
+     Explanation: 64-QAM has 64 constellation points, and 2^6 = 64, so 6 bits
+     are needed to represent each symbol.
+
+Q3.  FALSE
+     Explanation: Higher-order modulation (like 16-QAM) has WORSE BER at the
+     same SNR because constellation points are closer together, making them
+     more susceptible to noise.
+
+Q4.  B) Points scatter more widely around ideal positions
+     Explanation: Lower SNR means more noise power relative to signal power,
+     causing received symbols to deviate further from their ideal positions.
+
+Q5.  TRUE
+     Explanation: Bandwidth is determined by the symbol rate (1/T) and pulse
+     shaping, not the modulation order. Higher-order modulation achieves better
+     spectral efficiency (bits/Hz) by packing more bits per symbol into the
+     same bandwidth.
+
+Q6.  A) All symbols have the same amplitude but different phases
+     Explanation: PSK (Phase Shift Keying) encodes information purely in the
+     phase of the carrier. All 8-PSK symbols have unit amplitude but are
+     separated by 45 degrees (360/8) in phase.
+
+Q7.  TRUE
+     Explanation: 64-QAM requires approximately 6 dB more Eb/N0 than QPSK to
+     achieve the same BER. This is the trade-off for higher spectral efficiency
+     (6 bits/symbol vs 2 bits/symbol).
+
+Q8.  B) Adjacent symbols differ by only one bit, minimizing bit errors when
+        symbol errors occur
+     Explanation: With Gray coding, when noise causes a symbol to be decoded as
+     an adjacent symbol (the most common error), only 1 bit is wrong instead of
+     potentially multiple bits.
+
+Q9.  TRUE
+     Explanation: Rectangular pulses have a sinc spectrum with theoretically
+     infinite bandwidth. Raised cosine shaping concentrates energy into a
+     finite bandwidth of (1+alpha)/T, reducing out-of-band emissions and
+     adjacent channel interference.
+
+Q10. B) 10^-3
+     Explanation: BER = (bit errors) / (total bits) = 50 / 50,000 = 0.001 = 10^-3

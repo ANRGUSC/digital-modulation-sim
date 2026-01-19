@@ -1,0 +1,99 @@
+/**
+ * Wireless Modulation Simulator - Global Styles
+ *
+ * This file configures Tailwind CSS and defines custom styles for the
+ * educational wireless communications simulator.
+ */
+
+@import "tailwindcss";
+
+/**
+ * Custom CSS Variables for the dark theme
+ * These colors are chosen for readability in lab/classroom environments
+ */
+:root {
+  /* Dark background colors */
+  --bg-primary: #0f172a;      /* Main background - slate-900 */
+  --bg-secondary: #1e293b;    /* Card backgrounds - slate-800 */
+  --bg-tertiary: #334155;     /* Elevated elements - slate-700 */
+
+  /* Signal visualization colors */
+  --color-i-channel: #22d3ee;  /* Cyan for In-phase component */
+  --color-q-channel: #f97316;  /* Orange for Quadrature component */
+  --color-ideal-point: #3b82f6; /* Blue for ideal constellation points */
+  --color-received: #ef4444;    /* Red for received symbols */
+  --color-theoretical: #22c55e; /* Green for theoretical BER curve */
+  --color-simulated: #eab308;   /* Yellow for simulated BER points */
+
+  /* Grid and axis colors */
+  --color-grid: #475569;       /* Subtle grid lines - slate-600 */
+  --color-axis: #94a3b8;       /* Axis labels - slate-400 */
+
+  /* Text colors */
+  --text-primary: #f8fafc;     /* Primary text - slate-50 */
+  --text-secondary: #cbd5e1;   /* Secondary text - slate-300 */
+  --text-muted: #64748b;       /* Muted text - slate-500 */
+}
+
+/**
+ * Base styles for the application
+ */
+body {
+  margin: 0;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/**
+ * Custom utility classes for the simulator
+ */
+
+/* Monospace font for numerical displays (better alignment) */
+.font-mono-numbers {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Canvas container styling */
+.canvas-container {
+  background-color: var(--bg-secondary);
+  border-radius: 0.5rem;
+  border: 1px solid var(--bg-tertiary);
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-grid);
+}
+
+/**
+ * Animation for smooth transitions
+ */
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
