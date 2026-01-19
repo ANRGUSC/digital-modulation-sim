@@ -48,7 +48,7 @@ This tool helps students understand:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/wireless-modulation-sim.git
+git clone https://github.com/ANRGUSC/wireless-modulation-sim.git
 cd wireless-modulation-sim
 
 # Install dependencies
