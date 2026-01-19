@@ -23,6 +23,8 @@ This simulator makes abstract modulation concepts tangible through real-time vis
 - **Passband Waveforms**: See actual RF signal shapes for each symbol
 - **Frequency Spectrum**: Understand bandwidth and pulse shaping effects
 - **Interactive Controls**: Adjust SNR, playback speed, and pulse shaping
+- **Interactive Quiz**: Test your understanding with 10 questions (with autosave)
+- **Dig Deeper**: Explore the implementation code behind key algorithms
 
 ## Educational Value
 
@@ -105,6 +107,24 @@ In the Modulation Waveform Reference section:
 - Observe the frequency spectrum change
 - Note how raised cosine has finite bandwidth while rectangular has infinite (sinc) spectrum
 
+### 6. Take the Quiz
+
+Click "Take Quiz" to test your understanding:
+- 10 questions (True/False and Multiple Choice)
+- Each question includes a hint on how to verify the answer using the simulator
+- Answers are automatically saved in your browser
+- Download your answers as a text file for submission
+
+### 7. Dig Deeper
+
+Click "Dig Deeper" to explore how key algorithms are implemented:
+- **Q-Function**: The mathematical foundation of BER calculations
+- **BER Formulas**: Closed-form expressions for each modulation scheme
+- **Constellation Generation**: Gray coding and I/Q symbol mapping
+- **AWGN Channel**: How noise is added to simulate real channels
+- **Raised Cosine Pulse Shaping**: Bandwidth-efficient transmission
+- **Box-Muller Transform**: Generating Gaussian random numbers
+
 ## Project Structure
 
 ```
@@ -118,7 +138,9 @@ digital-modulation-sim/
 │   │   ├── PlaybackControls.tsx
 │   │   ├── SNRSlider.tsx
 │   │   ├── StatisticsPanel.tsx
-│   │   └── WaveformDisplay.tsx
+│   │   ├── WaveformDisplay.tsx
+│   │   ├── Quiz.tsx                 # Interactive quiz with autosave
+│   │   └── DigDeeper.tsx            # Code implementation examples
 │   ├── hooks/               # Custom React hooks
 │   │   ├── useSimulation.ts      # Core simulation logic
 │   │   └── useAnimationFrame.ts
@@ -165,12 +187,14 @@ All constellation mappings use Gray coding, where adjacent symbols differ by onl
 
 ## Review Questions
 
-See `questions.txt` for 10 review questions that students can answer after using the simulator. Topics include:
+The simulator includes an interactive **Quiz** feature (click "Take Quiz" in the header) with 10 questions covering:
 - QPSK vs BPSK performance
 - Bits per symbol calculations
 - Effects of SNR on constellation
 - Gray coding benefits
 - Bandwidth and pulse shaping
+
+Each question includes hints that encourage students to verify answers using the simulator. Answers auto-save and can be downloaded for submission. The raw questions are also available in `questions.txt`.
 
 ## License
 

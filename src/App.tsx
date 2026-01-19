@@ -111,6 +111,12 @@ function App() {
             </div>
             <div className="flex items-center gap-4">
               <Link
+                to="/dig-deeper"
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium transition-colors"
+              >
+                Dig Deeper
+              </Link>
+              <Link
                 to="/quiz"
                 className="px-4 py-2 bg-green-600 hover:bg-green-500 rounded-lg text-sm font-medium transition-colors"
               >
