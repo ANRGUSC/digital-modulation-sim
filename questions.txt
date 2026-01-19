@@ -1,5 +1,5 @@
-Wireless Modulation Simulator - Review Questions
-================================================
+Digital Modulation Simulator - Review Questions
+===============================================
 
 These questions are designed to reinforce concepts from the simulator.
 Answer them after experimenting with different modulation schemes and SNR values.

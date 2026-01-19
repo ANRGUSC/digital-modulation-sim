@@ -1,5 +1,5 @@
 /**
- * Type Definitions for Wireless Modulation Simulator
+ * Type Definitions for Digital Modulation Simulator
  *
  * This file defines the core data structures used throughout the simulator.
  * Understanding these types is fundamental to understanding how digital

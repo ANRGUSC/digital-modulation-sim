@@ -1,7 +1,7 @@
 /**
  * Quiz Component
  *
- * Interactive quiz to test understanding of wireless modulation concepts.
+ * Interactive quiz to test understanding of digital modulation concepts.
  * Features:
  * - 10 questions (True/False and Multiple Choice)
  * - Autosave to localStorage
@@ -117,7 +117,7 @@ const QUESTIONS: Question[] = [
   },
 ];
 
-const STORAGE_KEY = 'wireless-modulation-quiz-answers';
+const STORAGE_KEY = 'digital-modulation-quiz-answers';
 
 // =============================================================================
 // COMPONENT
@@ -169,7 +169,7 @@ export const Quiz: React.FC = () => {
     if (!filename) return;
 
     // Build the text content
-    let content = 'Wireless Modulation Simulator - Quiz Answers\n';
+    let content = 'Digital Modulation Simulator - Quiz Answers\n';
     content += '=============================================\n\n';
     content += `Student Name: ${studentName || '(not provided)'}\n`;
     content += `Date: ${new Date().toLocaleString()}\n\n`;

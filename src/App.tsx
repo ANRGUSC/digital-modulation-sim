@@ -1,5 +1,5 @@
 /**
- * Wireless Modulation Simulator - Main Application
+ * Digital Modulation Simulator - Main Application
  *
  * An interactive educational web application for graduate students studying
  * wireless communications. This simulator allows students to explore digital
@@ -103,7 +103,7 @@ function App() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
             <div>
               <h1 className="text-2xl font-bold text-cyan-400">
-                Wireless Modulation Simulator
+                Digital Modulation Simulator
               </h1>
               <p className="text-sm text-slate-400">
                 This simulator allows you to explore the bit error rate performance of major digital modulation schemes under additive white Gaussian noise (AWGN).

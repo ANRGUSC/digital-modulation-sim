@@ -1,13 +1,13 @@
-# Wireless Modulation Simulator
+# Digital Modulation Simulator
 
 An interactive, educational web application for exploring digital modulation schemes in wireless communications. Built for graduate students studying wireless networks and digital communications.
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-brightgreen.svg)](https://wireless-modulation-sim.vercel.app)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-brightgreen.svg)](https://digital-modulation-sim.vercel.app)
 [![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm%20Noncommercial-blue.svg)](LICENSE.md)
 [![Built with React](https://img.shields.io/badge/Built%20with-React-61DAFB.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
 
-**[Try the Live Demo →](https://wireless-modulation-sim.vercel.app)**
+**[Try the Live Demo →](https://digital-modulation-sim.vercel.app)**
 
 ## Overview
 
@@ -48,8 +48,8 @@ This tool helps students understand:
 
 ```bash
 # Clone the repository
-git clone https://github.com/ANRGUSC/wireless-modulation-sim.git
-cd wireless-modulation-sim
+git clone https://github.com/ANRGUSC/digital-modulation-sim.git
+cd digital-modulation-sim
 
 # Install dependencies
 npm install
@@ -108,7 +108,7 @@ In the Modulation Waveform Reference section:
 ## Project Structure
 
 ```
-wireless-modulation-sim/
+digital-modulation-sim/
 ├── src/
 │   ├── components/          # React UI components
 │   │   ├── BERPlot.tsx           # BER vs SNR chart
