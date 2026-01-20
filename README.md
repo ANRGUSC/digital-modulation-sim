@@ -1,6 +1,6 @@
 # Digital Modulation Simulator
 
-An interactive, educational web application for exploring digital modulation schemes in wireless communications. Built for graduate students studying wireless networks and digital communications.
+An interactive, educational web application for exploring digital modulation schemes in wireless communications. Built for students studying wireless networks and digital communications.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-brightgreen.svg)](https://digital-modulation-sim.vercel.app)
 [![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm%20Noncommercial-blue.svg)](LICENSE.md)
