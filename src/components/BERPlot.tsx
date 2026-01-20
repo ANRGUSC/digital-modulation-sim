@@ -46,6 +46,7 @@ import {
   ComposedChart,
 } from 'recharts';
 import type { ModulationScheme } from '../types';
+import { MODULATION_SCHEMES } from '../types';
 import { generateTheoreticalBERCurve } from '../utils/theory';
 
 // =============================================================================
@@ -74,12 +75,26 @@ interface BERPlotProps {
 // BER axis ticks (powers of 10)
 const BER_TICKS = [1, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6];
 
+// Fixed plot range
+const PLOT_SNR_MIN = -5;
+const PLOT_SNR_MAX = 20;
+
+// Colors for each scheme (active state)
+const SCHEME_COLORS: Record<ModulationScheme, string> = {
+  'BPSK': '#22c55e',    // Green
+  'QPSK': '#3b82f6',    // Blue
+  '8-PSK': '#a855f7',   // Purple
+  '16-QAM': '#f97316',  // Orange
+  '64-QAM': '#ef4444',  // Red
+};
+
 // Colors
 const COLORS = {
-  theoretical: '#22c55e',   // Green
+  theoretical: '#22c55e',   // Green (for current scheme)
   simulated: '#eab308',     // Yellow/Gold
   currentSnr: '#ef4444',    // Red
   grid: '#334155',
+  inactive: '#475569',      // Faint gray for inactive schemes
 };
 
 // =============================================================================
@@ -97,32 +112,42 @@ export const BERPlot: React.FC<BERPlotProps> = ({
   currentSnrDb,
   simulatedBER,
   bitCount: _bitCount,  // Reserved for future confidence display
-  snrMin = 0,
-  snrMax = 20,
+  snrMin: _snrMin,  // Ignored - using fixed range
+  snrMax: _snrMax,  // Ignored - using fixed range
 }) => {
   /**
-   * Generate theoretical BER curve data.
-   * Memoized to avoid regeneration on every render.
+   * Generate theoretical BER curves for ALL schemes.
+   * This allows showing faint comparison curves in the background.
    */
-  const theoreticalData = useMemo(() => {
-    return generateTheoreticalBERCurve(scheme, snrMin, snrMax, 50);
-  }, [scheme, snrMin, snrMax]);
+  const allCurvesData = useMemo(() => {
+    const curves: Record<ModulationScheme, Array<{ snrDb: number; ber: number }>> = {} as any;
+    for (const s of MODULATION_SCHEMES) {
+      curves[s] = generateTheoreticalBERCurve(s, PLOT_SNR_MIN, PLOT_SNR_MAX, 50);
+    }
+    return curves;
+  }, []);
 
   /**
-   * Create combined data for the chart.
-   * Each point has snrDb and theoretical BER.
-   * We'll overlay the simulated point separately.
+   * Create combined data for the chart with all schemes.
    */
   const chartData = useMemo(() => {
-    return theoreticalData.map(point => ({
-      snrDb: point.snrDb,
-      theoretical: point.ber,
+    // Use the current scheme's data as the base for SNR values
+    const baseData = allCurvesData[scheme];
+    return baseData.map((point, idx) => {
+      const dataPoint: any = {
+        snrDb: point.snrDb,
+      };
+      // Add BER for each scheme
+      for (const s of MODULATION_SCHEMES) {
+        dataPoint[s] = allCurvesData[s][idx]?.ber ?? null;
+      }
       // Add simulated point at the matching SNR
-      simulated: Math.abs(point.snrDb - currentSnrDb) < 0.5 && simulatedBER
+      dataPoint.simulated = Math.abs(point.snrDb - currentSnrDb) < 0.5 && simulatedBER
         ? simulatedBER
-        : null,
-    }));
-  }, [theoreticalData, currentSnrDb, simulatedBER]);
+        : null;
+      return dataPoint;
+    });
+  }, [allCurvesData, scheme, currentSnrDb, simulatedBER]);
 
   /**
    * Custom Y-axis tick formatter for log scale.
@@ -163,7 +188,7 @@ export const BERPlot: React.FC<BERPlotProps> = ({
 
   // Calculate a sample BER at 10dB for verification display
   // This should visibly change when scheme changes
-  const sampleBER = theoreticalData.find(p => Math.abs(p.snrDb - 10) < 0.5)?.ber;
+  const sampleBER = allCurvesData[scheme].find(p => Math.abs(p.snrDb - 10) < 0.5)?.ber;
 
   return (
     <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
@@ -196,7 +221,7 @@ export const BERPlot: React.FC<BERPlotProps> = ({
             <XAxis
               dataKey="snrDb"
               type="number"
-              domain={[snrMin, snrMax]}
+              domain={[PLOT_SNR_MIN, PLOT_SNR_MAX]}
               tick={{ fill: '#94a3b8', fontSize: 11 }}
               tickLine={{ stroke: '#64748b' }}
               axisLine={{ stroke: '#64748b' }}
@@ -250,15 +275,31 @@ export const BERPlot: React.FC<BERPlotProps> = ({
               }}
             />
 
-            {/* Theoretical BER curve */}
+            {/* Inactive scheme curves (faint, in background) */}
+            {MODULATION_SCHEMES.filter(s => s !== scheme).map(s => (
+              <Line
+                key={s}
+                type="monotone"
+                dataKey={s}
+                name={s}
+                stroke={COLORS.inactive}
+                strokeWidth={1}
+                strokeOpacity={0.4}
+                dot={false}
+                activeDot={false}
+                legendType="none"
+              />
+            ))}
+
+            {/* Active scheme curve (bold, in foreground) */}
             <Line
               type="monotone"
-              dataKey="theoretical"
-              name="Theoretical"
-              stroke={COLORS.theoretical}
-              strokeWidth={2}
+              dataKey={scheme}
+              name={`${scheme} (Theoretical)`}
+              stroke={SCHEME_COLORS[scheme]}
+              strokeWidth={2.5}
               dot={false}
-              activeDot={{ r: 4, fill: COLORS.theoretical }}
+              activeDot={{ r: 4, fill: SCHEME_COLORS[scheme] }}
             />
 
             {/* Simulated BER point */}
@@ -273,10 +314,17 @@ export const BERPlot: React.FC<BERPlotProps> = ({
       </div>
 
       {/* Current values display */}
-      <div className="flex justify-center gap-8 mt-3 text-xs">
+      <div className="flex justify-center gap-6 mt-3 text-xs flex-wrap">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-0.5 bg-green-500 rounded" />
-          <span className="text-slate-400">Theoretical BER</span>
+          <div
+            className="w-4 h-0.5 rounded"
+            style={{ backgroundColor: SCHEME_COLORS[scheme] }}
+          />
+          <span className="text-slate-400">{scheme} (selected)</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-0.5 bg-slate-500 rounded opacity-40" />
+          <span className="text-slate-400">Other schemes</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 bg-yellow-500 rounded-full" />

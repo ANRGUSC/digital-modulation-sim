@@ -104,6 +104,11 @@ export interface ReceivedSymbol extends Complex {
 export type ModulationScheme = 'BPSK' | 'QPSK' | '8-PSK' | '16-QAM' | '64-QAM';
 
 /**
+ * Array of all modulation schemes (for iteration).
+ */
+export const MODULATION_SCHEMES: ModulationScheme[] = ['BPSK', 'QPSK', '8-PSK', '16-QAM', '64-QAM'];
+
+/**
  * Lookup table for bits per symbol for each modulation scheme.
  * This is simply log₂(M) where M is the constellation size.
  */

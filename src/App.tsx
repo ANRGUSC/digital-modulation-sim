@@ -182,14 +182,12 @@ function App() {
             showGrid={true}
           />
 
-          {/* BER Performance Plot - X-axis matches SNR slider range */}
+          {/* BER Performance Plot - fixed range with all schemes shown */}
           <BERPlot
             scheme={state.scheme}
             currentSnrDb={state.snrDb}
             simulatedBER={state.bitCount > 0 ? currentBER : null}
             bitCount={state.bitCount}
-            snrMin={-5}
-            snrMax={maxSnr}
           />
         </div>
 
