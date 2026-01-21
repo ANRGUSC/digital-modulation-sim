@@ -170,25 +170,25 @@ export const ConstellationDiagram: React.FC<ConstellationDiagramProps> = ({
 
     // Draw grid
     if (showGrid) {
-      drawGrid(ctx, margin, width, height, axisRange, toCanvasX, toCanvasY);
+      drawGrid(ctx, margin, width, height, axisRange, toCanvasX, toCanvasY, COLORS);
     }
 
     // Draw unit circle for PSK schemes
     if (showUnitCircle && isPSK) {
-      drawUnitCircle(ctx, toCanvasX, toCanvasY);
+      drawUnitCircle(ctx, toCanvasX, toCanvasY, COLORS);
     }
 
     // Draw axes
-    drawAxes(ctx, margin, width, height, toCanvasX, toCanvasY);
+    drawAxes(ctx, margin, width, height, toCanvasX, toCanvasY, COLORS);
 
     // Draw received symbols first (so ideal points overlay them)
-    drawReceivedSymbols(ctx, receivedSymbols, toCanvasX, toCanvasY);
+    drawReceivedSymbols(ctx, receivedSymbols, toCanvasX, toCanvasY, COLORS);
 
     // Draw ideal constellation points
-    drawIdealPoints(ctx, constellation, toCanvasX, toCanvasY, showLabels);
+    drawIdealPoints(ctx, constellation, toCanvasX, toCanvasY, showLabels, COLORS);
 
     // Draw axis labels
-    drawAxisLabels(ctx, margin, width, height);
+    drawAxisLabels(ctx, margin, width, height, COLORS);
 
   }, [constellation, receivedSymbols, width, height, axisRange, showLabels, showUnitCircle, showGrid, isPSK]);
 
@@ -305,7 +305,8 @@ function drawGrid(
   height: number,
   axisRange: number,
   toCanvasX: (i: number) => number,
-  toCanvasY: (q: number) => number
+  toCanvasY: (q: number) => number,
+  COLORS: ReturnType<typeof getColors>
 ) {
   ctx.strokeStyle = COLORS.grid;
   ctx.lineWidth = 0.5;
@@ -333,7 +334,8 @@ function drawGrid(
 function drawUnitCircle(
   ctx: CanvasRenderingContext2D,
   toCanvasX: (i: number) => number,
-  toCanvasY: (q: number) => number
+  toCanvasY: (q: number) => number,
+  COLORS: ReturnType<typeof getColors>
 ) {
   ctx.strokeStyle = COLORS.unitCircle;
   ctx.lineWidth = 1;
@@ -359,7 +361,8 @@ function drawAxes(
   width: number,
   height: number,
   toCanvasX: (i: number) => number,
-  toCanvasY: (q: number) => number
+  toCanvasY: (q: number) => number,
+  COLORS: ReturnType<typeof getColors>
 ) {
   ctx.strokeStyle = COLORS.axis;
   ctx.lineWidth = 1;
@@ -414,7 +417,8 @@ function drawAxisLabels(
   ctx: CanvasRenderingContext2D,
   _margin: number,  // Unused, kept for consistent function signature
   width: number,
-  height: number
+  height: number,
+  COLORS: ReturnType<typeof getColors>
 ) {
   ctx.fillStyle = COLORS.text;
   ctx.font = 'bold 12px system-ui';
@@ -438,7 +442,8 @@ function drawReceivedSymbols(
   ctx: CanvasRenderingContext2D,
   receivedSymbols: ReceivedSymbol[],
   toCanvasX: (i: number) => number,
-  toCanvasY: (q: number) => number
+  toCanvasY: (q: number) => number,
+  COLORS: ReturnType<typeof getColors>
 ) {
   const markerSize = 4;
 
@@ -477,7 +482,8 @@ function drawIdealPoints(
   constellation: ConstellationPoint[],
   toCanvasX: (i: number) => number,
   toCanvasY: (q: number) => number,
-  showLabels: boolean
+  showLabels: boolean,
+  COLORS: ReturnType<typeof getColors>
 ) {
   const pointRadius = 8;
 
