@@ -13,6 +13,17 @@ An interactive, educational web application for exploring digital modulation sch
 
 This simulator makes abstract modulation concepts tangible through real-time visualization. Students can experiment with different modulation schemes, adjust signal-to-noise ratios, and observe how these changes affect bit error rates, constellation diagrams, and waveforms.
 
+## Screenshots
+
+### Main Simulator
+![Main Simulator](screenshots/main-simulator.png)
+
+### Interactive Quiz
+![Interactive Quiz](screenshots/quiz.png)
+
+### Dig Deeper - Implementation Details
+![Dig Deeper](screenshots/dig-deeper.png)
+
 ### Key Features
 
 - **5 Modulation Schemes**: BPSK, QPSK, 8-PSK, 16-QAM, and 64-QAM
