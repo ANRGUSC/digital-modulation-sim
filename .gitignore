@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 .vercel
+
+# Ignore Claude workspace
+.claude/
