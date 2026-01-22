@@ -26,9 +26,33 @@
   --color-i-channel: #22d3ee;  /* Cyan for In-phase component */
   --color-q-channel: #f97316;  /* Orange for Quadrature component */
   --color-ideal-point: #3b82f6; /* Blue for ideal constellation points */
-  --color-received: #ef4444;    /* Red for received symbols */
+  --color-ideal-point-fill: #60a5fa;
+  --color-received-ok: #22c55e;
+  --color-received-error: #ef4444;
+  --color-received-normal: #f97316;
   --color-theoretical: #22c55e; /* Green for theoretical BER curve */
   --color-simulated: #eab308;   /* Yellow for simulated BER points */
+  --color-current-snr: #ef4444;
+  --color-inactive-curve: #475569;
+  --color-decision-boundary: #64748b;
+  --color-spectrum: #a855f7;
+
+  /* Scheme colors (BER plot) */
+  --color-scheme-bpsk: #22c55e;
+  --color-scheme-qpsk: #3b82f6;
+  --color-scheme-8psk: #a855f7;
+  --color-scheme-16qam: #f97316;
+  --color-scheme-64qam: #ef4444;
+
+  /* Phase colors for passband waveforms */
+  --color-phase-1: #22d3ee;
+  --color-phase-2: #3b82f6;
+  --color-phase-3: #8b5cf6;
+  --color-phase-4: #d946ef;
+  --color-phase-5: #f43f5e;
+  --color-phase-6: #f97316;
+  --color-phase-7: #eab308;
+  --color-phase-8: #22c55e;
 
   /* Grid and axis colors */
   --color-grid: #475569;       /* Subtle grid lines - slate-600 */
@@ -55,9 +79,33 @@
   --color-i-channel: #0891b2;  /* Darker cyan for In-phase */
   --color-q-channel: #ea580c;  /* Darker orange for Quadrature */
   --color-ideal-point: #2563eb; /* Darker blue for ideal points */
-  --color-received: #dc2626;    /* Darker red for received symbols */
+  --color-ideal-point-fill: #60a5fa;
+  --color-received-ok: #16a34a;
+  --color-received-error: #dc2626;
+  --color-received-normal: #ea580c;
   --color-theoretical: #16a34a; /* Darker green for theoretical BER */
   --color-simulated: #ca8a04;   /* Darker yellow for simulated BER */
+  --color-current-snr: #dc2626;
+  --color-inactive-curve: #94a3b8;
+  --color-decision-boundary: #94a3b8;
+  --color-spectrum: #7c3aed;
+
+  /* Scheme colors (BER plot) */
+  --color-scheme-bpsk: #16a34a;
+  --color-scheme-qpsk: #2563eb;
+  --color-scheme-8psk: #7c3aed;
+  --color-scheme-16qam: #ea580c;
+  --color-scheme-64qam: #dc2626;
+
+  /* Phase colors for passband waveforms */
+  --color-phase-1: #0891b2;
+  --color-phase-2: #2563eb;
+  --color-phase-3: #7c3aed;
+  --color-phase-4: #a21caf;
+  --color-phase-5: #be123c;
+  --color-phase-6: #ea580c;
+  --color-phase-7: #ca8a04;
+  --color-phase-8: #16a34a;
 
   /* Grid and axis colors */
   --color-grid: #cbd5e1;       /* Light grid lines - slate-300 */
@@ -70,6 +118,38 @@
 
   /* Canvas background */
   --canvas-bg: #f9fafb;        /* Canvas background - gray-50 */
+}
+
+/* Color-blind safe palette overrides */
+[data-palette="colorblind"] {
+  --color-i-channel: #0072b2;
+  --color-q-channel: #e69f00;
+  --color-ideal-point: #56b4e9;
+  --color-ideal-point-fill: #8bd3f4;
+  --color-received-ok: #009e73;
+  --color-received-error: #d55e00;
+  --color-received-normal: #cc79a7;
+  --color-theoretical: #009e73;
+  --color-simulated: #f0e442;
+  --color-current-snr: #d55e00;
+  --color-inactive-curve: #7f8c8d;
+  --color-decision-boundary: #7f8c8d;
+  --color-spectrum: #cc79a7;
+
+  --color-scheme-bpsk: #009e73;
+  --color-scheme-qpsk: #0072b2;
+  --color-scheme-8psk: #cc79a7;
+  --color-scheme-16qam: #e69f00;
+  --color-scheme-64qam: #d55e00;
+
+  --color-phase-1: #56b4e9;
+  --color-phase-2: #0072b2;
+  --color-phase-3: #cc79a7;
+  --color-phase-4: #d55e00;
+  --color-phase-5: #e69f00;
+  --color-phase-6: #f0e442;
+  --color-phase-7: #009e73;
+  --color-phase-8: #000000;
 }
 
 /**

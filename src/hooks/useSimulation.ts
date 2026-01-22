@@ -376,10 +376,32 @@ export function useSimulation(
 
   /**
    * Change the SNR (Eb/N0) setting.
-   * Does not reset statistics - allows observing effect of changing SNR.
+   * Resets statistics if changed during active simulation.
    */
   const setSnrDb = useCallback((snrDb: number) => {
-    setState(prev => ({ ...prev, snrDb }));
+    setState(prev => {
+      if (prev.snrDb === snrDb) {
+        return prev;
+      }
+
+      if (prev.isPlaying) {
+        // Reset when changing SNR mid-simulation to avoid mixed statistics
+        timeAccumulatorRef.current = 0;
+        return {
+          ...prev,
+          snrDb,
+          symbolCount: 0,
+          bitCount: 0,
+          bitErrorCount: 0,
+          recentSymbols: [],
+          currentSymbols: [],
+          currentBits: [],
+          noisySymbols: [],
+        };
+      }
+
+      return { ...prev, snrDb };
+    });
   }, []);
 
   /**

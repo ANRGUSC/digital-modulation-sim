@@ -67,10 +67,10 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   /**
    * Icon components for buttons (using Unicode symbols for simplicity)
    */
-  const PlayIcon = () => <span className="text-lg">▶</span>;
-  const PauseIcon = () => <span className="text-lg">⏸</span>;
-  const StepIcon = () => <span className="text-lg">⏭</span>;
-  const ResetIcon = () => <span className="text-lg">↺</span>;
+  const PlayIcon = () => <span className="text-lg">{'>'}</span>;
+  const PauseIcon = () => <span className="text-lg">||</span>;
+  const StepIcon = () => <span className="text-lg">{'>>'}</span>;
+  const ResetIcon = () => <span className="text-lg">R</span>;
 
   /**
    * Calculate speed slider percentage for visual display.

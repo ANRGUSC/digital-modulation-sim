@@ -48,7 +48,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ theme, onToggle }) => 
       title={`Switch to ${isDark ? 'light' : 'dark'} theme for better visibility`}
       aria-label={`Switch to ${isDark ? 'light' : 'dark'} theme`}
     >
-      {isDark ? '☀️ Light' : '🌙 Dark'}
+      {isDark ? 'Light' : 'Dark'}
     </button>
   );
 };

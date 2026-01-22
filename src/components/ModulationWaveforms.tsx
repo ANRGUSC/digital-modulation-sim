@@ -79,18 +79,18 @@ const getColors = () => ({
   axis: getCSSVar('--color-axis'),
   waveform: getCSSVar('--color-i-channel'),
   envelope: getCSSVar('--color-q-channel'),
-  spectrum: '#a855f7',
+  spectrum: getCSSVar('--color-spectrum'),
   text: getCSSVar('--text-muted'),
   symbolBoundary: getCSSVar('--color-grid'),
   phaseColors: [
-    '#22d3ee', // cyan
-    '#3b82f6', // blue
-    '#8b5cf6', // violet
-    '#d946ef', // fuchsia
-    '#f43f5e', // rose
-    '#f97316', // orange
-    '#eab308', // yellow
-    '#22c55e', // green
+    getCSSVar('--color-phase-1'),
+    getCSSVar('--color-phase-2'),
+    getCSSVar('--color-phase-3'),
+    getCSSVar('--color-phase-4'),
+    getCSSVar('--color-phase-5'),
+    getCSSVar('--color-phase-6'),
+    getCSSVar('--color-phase-7'),
+    getCSSVar('--color-phase-8'),
   ],
 });
 
@@ -119,16 +119,18 @@ export const ModulationWaveforms: React.FC<ModulationWaveformsProps> = ({
   const [useRaisedCosine, setUseRaisedCosine] = useState(initialUseRaisedCosine);
 
   // Theme state - track changes to trigger canvas redraw
-  const [theme, setTheme] = useState(() =>
-    document.documentElement.getAttribute('data-theme') || 'dark'
-  );
+  const [theme, setTheme] = useState(() => {
+    const doc = document.documentElement;
+    return `${doc.getAttribute('data-theme') || 'dark'}|${doc.getAttribute('data-palette') || 'default'}`;
+  });
 
   // Listen for theme changes
   useEffect(() => {
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
-        if (mutation.attributeName === 'data-theme') {
-          setTheme(document.documentElement.getAttribute('data-theme') || 'dark');
+        if (mutation.attributeName === 'data-theme' || mutation.attributeName === 'data-palette') {
+          const doc = document.documentElement;
+          setTheme(`${doc.getAttribute('data-theme') || 'dark'}|${doc.getAttribute('data-palette') || 'default'}`);
         }
       });
     });
@@ -190,7 +192,7 @@ export const ModulationWaveforms: React.FC<ModulationWaveformsProps> = ({
     ctx.fillStyle = COLORS.text;
     ctx.font = 'bold 12px system-ui';
     ctx.textAlign = 'left';
-    ctx.fillText(`PASSBAND WAVEFORMS: s(t) = I·cos(2πfct) - Q·sin(2πfct)`, margin.left, 15);
+    ctx.fillText('PASSBAND WAVEFORMS: s(t) = I*cos(2*pi*fc*t) - Q*sin(2*pi*fc*t)', margin.left, 15);
 
     // Draw subtitle
     ctx.font = '10px system-ui';
@@ -270,7 +272,7 @@ export const ModulationWaveforms: React.FC<ModulationWaveformsProps> = ({
       ctx.fillStyle = '#64748b';
       ctx.font = '8px system-ui';
       const phaseDegs = (phase * 180 / Math.PI).toFixed(0);
-      ctx.fillText(`${phaseDegs}°`, startX + symbolWidth / 2, margin.top + plotHeight + 25);
+      ctx.fillText(`${phaseDegs} deg`, startX + symbolWidth / 2, margin.top + plotHeight + 25);
     });
 
     // Draw final boundary
@@ -346,7 +348,7 @@ export const ModulationWaveforms: React.FC<ModulationWaveformsProps> = ({
     ctx.textAlign = 'left';
     ctx.fillText('FREQUENCY SPECTRUM (Magnitude)', margin.left, 15);
 
-    // Frequency range: show ±(fc + 3/T) where we set fc = 4/T for this visualization
+    // Frequency range: show +/- (fc + 3/T) where we set fc = 4/T for this visualization
     // This makes bandwidth clearly visible relative to carrier
     const fcNorm = 4;  // Carrier at 4/T (4 symbol rates)
     const freqMin = -fcNorm - 3;  // Show from -(fc + 3/T)
@@ -378,7 +380,7 @@ export const ModulationWaveforms: React.FC<ModulationWaveformsProps> = ({
 
     // Draw spectrum
     // Baseband spectrum is sinc(f·T) = sinc(f) when f is in units of 1/T
-    // Passband spectrum is baseband shifted to ±fc
+    // Passband spectrum is baseband shifted to +/- fc
     ctx.strokeStyle = COLORS.spectrum;
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -500,7 +502,7 @@ export const ModulationWaveforms: React.FC<ModulationWaveformsProps> = ({
     ctx.fillText('0', margin.left - 5, margin.top + plotHeight + 3);
 
     // Bandwidth annotation
-    const bw = useRaisedCosine ? `(1+α)/T = ${(1 + alpha).toFixed(1)}/T` : '2/T (main lobe)';
+    const bw = useRaisedCosine ? `(1+alpha)/T = ${(1 + alpha).toFixed(1)}/T` : '2/T (main lobe)';
     ctx.fillStyle = '#64748b';
     ctx.font = '10px system-ui';
     ctx.textAlign = 'right';
@@ -569,7 +571,7 @@ export const ModulationWaveforms: React.FC<ModulationWaveformsProps> = ({
       </div>
       {constellation.length > maxVisibleSymbols && (
         <div className="text-xs text-center -mt-2" style={{ color: 'var(--text-muted)' }}>
-          ← Scroll horizontally to see all {constellation.length} symbols →
+          Scroll horizontally to see all {constellation.length} symbols
         </div>
       )}
 
@@ -584,14 +586,14 @@ export const ModulationWaveforms: React.FC<ModulationWaveformsProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs" style={{ color: 'var(--text-muted)' }}>
         <div>
           <strong style={{ color: 'var(--text-secondary)' }}>Time Domain:</strong>
-          {' '}Each symbol is shown as s(t) = A·cos(2πfc·t + φ) where A is the
-          amplitude and φ is the phase from the constellation point.
+          {' '}Each symbol is shown as s(t) = A*cos(2*pi*fc*t + phi) where A is the
+          amplitude and phi is the phase from the constellation point.
           {scheme.includes('PSK') && ' For PSK, all symbols have equal amplitude but different phases.'}
           {scheme.includes('QAM') && ' For QAM, symbols vary in both amplitude and phase.'}
         </div>
         <div>
           <strong style={{ color: 'var(--text-secondary)' }}>Frequency Domain:</strong>
-          {' '}The spectrum shows energy centered at ±fc (carrier frequency).
+          {' '}The spectrum shows energy centered at +/-fc (carrier frequency).
           {' '}Rectangular pulses have infinite bandwidth (sinc spectrum).
           {' '}Raised cosine shaping concentrates energy, reducing interference.
         </div>

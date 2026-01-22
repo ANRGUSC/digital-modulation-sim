@@ -66,12 +66,13 @@ const getColors = () => ({
   background: getCSSVar('--canvas-bg'),
   grid: getCSSVar('--color-grid'),
   axis: getCSSVar('--color-axis'),
-  idealPoint: '#3b82f6',      // Blue
-  idealPointFill: '#60a5fa',  // Lighter blue
-  receivedOK: '#22c55e',      // Green for correct
-  receivedError: '#ef4444',   // Red for errors
-  receivedNormal: '#f97316',  // Orange for normal received
+  idealPoint: getCSSVar('--color-ideal-point'),
+  idealPointFill: getCSSVar('--color-ideal-point-fill'),
+  receivedOK: getCSSVar('--color-received-ok'),
+  receivedError: getCSSVar('--color-received-error'),
+  receivedNormal: getCSSVar('--color-received-normal'),
   unitCircle: getCSSVar('--color-grid'),
+  decisionBoundary: getCSSVar('--color-decision-boundary'),
   text: getCSSVar('--text-muted'),
   bitLabel: getCSSVar('--text-primary'),
 });
@@ -102,23 +103,31 @@ export const ConstellationDiagram: React.FC<ConstellationDiagramProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Zoom state - default to 2x for 64-QAM, 1x for others
-  const [zoomIndex, setZoomIndex] = useState(() => scheme === '64-QAM' ? 2 : 0);
+  // Zoom state - default to 1.5x for 64-QAM, 1x for others
+  const [zoomIndex, setZoomIndex] = useState(() => scheme === '64-QAM' ? 1 : 0);
 
   // Label visibility state - local to this component, default to hidden
   const [showLabels, setShowLabels] = useState(showLabelsProp);
 
+  // Auto-fit state for constellation view
+  const [autoFit, setAutoFit] = useState(true);
+
+  // Decision boundary visibility
+  const [showDecisionBoundaries, setShowDecisionBoundaries] = useState(false);
+
   // Theme state - track changes to trigger canvas redraw
-  const [theme, setTheme] = useState(() =>
-    document.documentElement.getAttribute('data-theme') || 'dark'
-  );
+  const [theme, setTheme] = useState(() => {
+    const doc = document.documentElement;
+    return `${doc.getAttribute('data-theme') || 'dark'}|${doc.getAttribute('data-palette') || 'default'}`;
+  });
 
   // Listen for theme changes
   useEffect(() => {
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
-        if (mutation.attributeName === 'data-theme') {
-          setTheme(document.documentElement.getAttribute('data-theme') || 'dark');
+        if (mutation.attributeName === 'data-theme' || mutation.attributeName === 'data-palette') {
+          const doc = document.documentElement;
+          setTheme(`${doc.getAttribute('data-theme') || 'dark'}|${doc.getAttribute('data-palette') || 'default'}`);
         }
       });
     });
@@ -128,11 +137,28 @@ export const ConstellationDiagram: React.FC<ConstellationDiagramProps> = ({
 
   // Reset zoom when scheme changes (and set appropriate default)
   useEffect(() => {
-    setZoomIndex(scheme === '64-QAM' ? 2 : 0);
+    setZoomIndex(scheme === '64-QAM' ? 1 : 0);
   }, [scheme]);
 
   const zoomLevel = ZOOM_LEVELS[zoomIndex];
-  const axisRange = baseAxisRange / zoomLevel;
+
+  const maxConstellationAbs = useMemo(() => {
+    if (constellation.length === 0) return baseAxisRange;
+    return Math.max(
+      ...constellation.map((p) => Math.max(Math.abs(p.I), Math.abs(p.Q)))
+    );
+  }, [constellation, baseAxisRange]);
+
+  const maxReceivedAbs = useMemo(() => {
+    if (receivedSymbols.length === 0) return 0;
+    return Math.max(
+      ...receivedSymbols.map((p) => Math.max(Math.abs(p.I), Math.abs(p.Q)))
+    );
+  }, [receivedSymbols]);
+
+  const axisRange = autoFit
+    ? Math.max(1, Math.max(maxConstellationAbs, maxReceivedAbs) * 1.2)
+    : baseAxisRange / zoomLevel;
 
   const canZoomIn = zoomIndex < ZOOM_LEVELS.length - 1;
   const canZoomOut = zoomIndex > 0;
@@ -188,7 +214,8 @@ export const ConstellationDiagram: React.FC<ConstellationDiagramProps> = ({
 
     // Draw grid
     if (showGrid) {
-      drawGrid(ctx, margin, width, height, axisRange, toCanvasX, toCanvasY, COLORS);
+      const tickStep = getNiceStep(axisRange);
+      drawGrid(ctx, margin, width, height, axisRange, toCanvasX, toCanvasY, COLORS, tickStep);
     }
 
     // Draw unit circle for PSK schemes
@@ -197,7 +224,12 @@ export const ConstellationDiagram: React.FC<ConstellationDiagramProps> = ({
     }
 
     // Draw axes
-    drawAxes(ctx, margin, width, height, toCanvasX, toCanvasY, COLORS);
+    drawAxes(ctx, margin, width, height, axisRange, toCanvasX, toCanvasY, COLORS);
+
+    // Draw decision boundaries
+    if (showDecisionBoundaries) {
+      drawDecisionBoundaries(ctx, scheme, constellation, axisRange, toCanvasX, toCanvasY, COLORS);
+    }
 
     // Draw received symbols first (so ideal points overlay them)
     drawReceivedSymbols(ctx, receivedSymbols, toCanvasX, toCanvasY, COLORS);
@@ -208,7 +240,7 @@ export const ConstellationDiagram: React.FC<ConstellationDiagramProps> = ({
     // Draw axis labels
     drawAxisLabels(ctx, margin, width, height, COLORS);
 
-  }, [constellation, receivedSymbols, width, height, axisRange, showLabels, showUnitCircle, showGrid, isPSK, theme]);
+  }, [constellation, receivedSymbols, width, height, axisRange, showLabels, showUnitCircle, showGrid, isPSK, theme, showDecisionBoundaries]);
 
   return (
     <div
@@ -226,6 +258,36 @@ export const ConstellationDiagram: React.FC<ConstellationDiagramProps> = ({
           CONSTELLATION DIAGRAM
         </div>
         <div className="flex items-center gap-3">
+          {/* Auto-fit toggle */}
+          <button
+            onClick={() => setAutoFit(!autoFit)}
+            className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+              autoFit
+                ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+            }`}
+            title="Auto-fit the axis range to the visible constellation and received points"
+            aria-label={autoFit ? 'Disable auto-fit axis range' : 'Enable auto-fit axis range'}
+            aria-pressed={autoFit}
+          >
+            {autoFit ? 'Auto-Fit On' : 'Auto-Fit Off'}
+          </button>
+
+          {/* Decision boundaries toggle */}
+          <button
+            onClick={() => setShowDecisionBoundaries(!showDecisionBoundaries)}
+            className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+              showDecisionBoundaries
+                ? 'bg-amber-600 hover:bg-amber-500 text-white'
+                : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+            }`}
+            title="Show decision boundaries for the current modulation scheme"
+            aria-label={showDecisionBoundaries ? 'Hide decision boundaries' : 'Show decision boundaries'}
+            aria-pressed={showDecisionBoundaries}
+          >
+            {showDecisionBoundaries ? 'Boundaries On' : 'Boundaries Off'}
+          </button>
+
           {/* Bit labels toggle */}
           <button
             onClick={() => setShowLabels(!showLabels)}
@@ -238,32 +300,32 @@ export const ConstellationDiagram: React.FC<ConstellationDiagramProps> = ({
             aria-label={`${showLabels ? 'Hide' : 'Show'} bit labels on constellation points`}
             aria-pressed={showLabels}
           >
-            {showLabels ? '📍 Labels On' : '📍 Labels Off'}
+            {showLabels ? 'Labels On' : 'Labels Off'}
           </button>
 
           {/* Zoom controls */}
           <div className="flex items-center gap-1">
             <button
               onClick={handleZoomOut}
-              disabled={!canZoomOut}
+              disabled={!canZoomOut || autoFit}
               className={`w-6 h-6 rounded text-sm font-bold transition-colors ${
-                canZoomOut
+                canZoomOut && !autoFit
                   ? 'bg-slate-700 hover:bg-slate-600 text-slate-200'
                   : 'bg-slate-800 text-slate-600 cursor-not-allowed'
               }`}
               title="Zoom out the constellation diagram to see a wider I/Q range"
               aria-label="Zoom out constellation diagram"
             >
-              −
+              -
             </button>
             <span className="text-xs w-10 text-center" style={{ color: 'var(--text-muted)' }} aria-live="polite" aria-atomic="true">
-              {zoomLevel}×
+              {autoFit ? 'Auto' : `${zoomLevel}x`}
             </span>
             <button
               onClick={handleZoomIn}
-              disabled={!canZoomIn}
+              disabled={!canZoomIn || autoFit}
               className={`w-6 h-6 rounded text-sm font-bold transition-colors ${
-                canZoomIn
+                canZoomIn && !autoFit
                   ? 'bg-slate-700 hover:bg-slate-600 text-slate-200'
                   : 'bg-slate-800 text-slate-600 cursor-not-allowed'
               }`}
@@ -293,15 +355,15 @@ export const ConstellationDiagram: React.FC<ConstellationDiagramProps> = ({
       {/* Legend */}
       <div className="flex justify-center gap-6 mt-3 text-xs" role="list" aria-label="Constellation diagram legend">
         <div className="flex items-center gap-2" role="listitem">
-          <div className="w-3 h-3 rounded-full bg-blue-500" aria-hidden="true" />
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'var(--color-ideal-point)' }} aria-hidden="true" />
           <span style={{ color: 'var(--text-muted)' }}>Ideal points</span>
         </div>
         <div className="flex items-center gap-2" role="listitem">
-          <span className="text-orange-500 font-bold" aria-hidden="true">×</span>
+          <span className="font-bold" style={{ color: 'var(--color-received-normal)' }} aria-hidden="true">x</span>
           <span style={{ color: 'var(--text-muted)' }}>Received</span>
         </div>
         <div className="flex items-center gap-2" role="listitem">
-          <span className="text-red-500 font-bold" aria-hidden="true">×</span>
+          <span className="font-bold" style={{ color: 'var(--color-received-error)' }} aria-hidden="true">x</span>
           <span style={{ color: 'var(--text-muted)' }}>Error</span>
         </div>
       </div>
@@ -324,13 +386,14 @@ function drawGrid(
   axisRange: number,
   toCanvasX: (i: number) => number,
   toCanvasY: (q: number) => number,
-  COLORS: ReturnType<typeof getColors>
+  COLORS: ReturnType<typeof getColors>,
+  tickStep: number
 ) {
   ctx.strokeStyle = COLORS.grid;
   ctx.lineWidth = 0.5;
 
   // Vertical grid lines
-  for (let i = -axisRange; i <= axisRange; i += 0.5) {
+  for (let i = -axisRange; i <= axisRange + 1e-6; i += tickStep) {
     ctx.beginPath();
     ctx.moveTo(toCanvasX(i), margin);
     ctx.lineTo(toCanvasX(i), height - margin);
@@ -338,7 +401,7 @@ function drawGrid(
   }
 
   // Horizontal grid lines
-  for (let q = -axisRange; q <= axisRange; q += 0.5) {
+  for (let q = -axisRange; q <= axisRange + 1e-6; q += tickStep) {
     ctx.beginPath();
     ctx.moveTo(margin, toCanvasY(q));
     ctx.lineTo(width - margin, toCanvasY(q));
@@ -378,6 +441,7 @@ function drawAxes(
   margin: number,
   width: number,
   height: number,
+  axisRange: number,
   toCanvasX: (i: number) => number,
   toCanvasY: (q: number) => number,
   COLORS: ReturnType<typeof getColors>
@@ -403,29 +467,106 @@ function drawAxes(
   ctx.textAlign = 'center';
 
   // I axis ticks
-  for (let i = -1.5; i <= 1.5; i += 0.5) {
-    if (i === 0) continue;
+  const tickStep = getNiceStep(axisRange);
+  for (let i = -axisRange; i <= axisRange + 1e-6; i += tickStep) {
+    if (Math.abs(i) < 1e-10) continue;
     const x = toCanvasX(i);
     const y = toCanvasY(0);
     ctx.beginPath();
     ctx.moveTo(x, y - 3);
     ctx.lineTo(x, y + 3);
     ctx.stroke();
-    ctx.fillText(i.toFixed(1), x, y + 15);
+    ctx.fillText(formatAxisTick(i), x, y + 15);
   }
 
   // Q axis ticks
   ctx.textAlign = 'right';
-  for (let q = -1.5; q <= 1.5; q += 0.5) {
-    if (q === 0) continue;
+  for (let q = -axisRange; q <= axisRange + 1e-6; q += tickStep) {
+    if (Math.abs(q) < 1e-10) continue;
     const x = toCanvasX(0);
     const y = toCanvasY(q);
     ctx.beginPath();
     ctx.moveTo(x - 3, y);
     ctx.lineTo(x + 3, y);
     ctx.stroke();
-    ctx.fillText(q.toFixed(1), x - 8, y + 3);
+    ctx.fillText(formatAxisTick(q), x - 8, y + 3);
   }
+}
+
+/**
+ * Draw decision boundaries for PSK and square QAM schemes.
+ */
+function drawDecisionBoundaries(
+  ctx: CanvasRenderingContext2D,
+  scheme: ModulationScheme,
+  constellation: ConstellationPoint[],
+  axisRange: number,
+  toCanvasX: (i: number) => number,
+  toCanvasY: (q: number) => number,
+  COLORS: ReturnType<typeof getColors>
+) {
+  ctx.strokeStyle = COLORS.decisionBoundary;
+  ctx.lineWidth = 1;
+  ctx.setLineDash([6, 4]);
+
+  if (scheme.includes('PSK')) {
+    const angles = constellation.map((p) => Math.atan2(p.Q, p.I)).sort((a, b) => a - b);
+    if (angles.length > 1) {
+      const boundaries: number[] = [];
+      for (let i = 0; i < angles.length; i++) {
+        const a1 = angles[i];
+        const a2 = i === angles.length - 1 ? angles[0] + 2 * Math.PI : angles[i + 1];
+        boundaries.push((a1 + a2) / 2);
+      }
+
+      boundaries.forEach((theta) => {
+        const x1 = axisRange * Math.cos(theta);
+        const y1 = axisRange * Math.sin(theta);
+        ctx.beginPath();
+        ctx.moveTo(toCanvasX(-x1), toCanvasY(-y1));
+        ctx.lineTo(toCanvasX(x1), toCanvasY(y1));
+        ctx.stroke();
+      });
+    }
+  } else if (scheme.includes('QAM')) {
+    const uniqueI = Array.from(new Set(constellation.map((p) => p.I))).sort((a, b) => a - b);
+    const uniqueQ = Array.from(new Set(constellation.map((p) => p.Q))).sort((a, b) => a - b);
+
+    for (let i = 0; i < uniqueI.length - 1; i++) {
+      const mid = (uniqueI[i] + uniqueI[i + 1]) / 2;
+      ctx.beginPath();
+      ctx.moveTo(toCanvasX(mid), toCanvasY(-axisRange));
+      ctx.lineTo(toCanvasX(mid), toCanvasY(axisRange));
+      ctx.stroke();
+    }
+
+    for (let q = 0; q < uniqueQ.length - 1; q++) {
+      const mid = (uniqueQ[q] + uniqueQ[q + 1]) / 2;
+      ctx.beginPath();
+      ctx.moveTo(toCanvasX(-axisRange), toCanvasY(mid));
+      ctx.lineTo(toCanvasX(axisRange), toCanvasY(mid));
+      ctx.stroke();
+    }
+  }
+
+  ctx.setLineDash([]);
+}
+
+/**
+ * Pick a nice tick step for the given axis range.
+ */
+function getNiceStep(axisRange: number): number {
+  const targetTicks = 6;
+  const rawStep = (axisRange * 2) / targetTicks;
+  const steps = [0.1, 0.2, 0.25, 0.5, 1, 2, 4, 5, 10];
+  return steps.find((step) => step >= rawStep) || 10;
+}
+
+function formatAxisTick(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 10) return value.toFixed(0);
+  if (abs >= 1) return value.toFixed(1);
+  return value.toFixed(2);
 }
 
 /**
@@ -474,7 +615,7 @@ function drawReceivedSymbols(
     const alpha = Math.max(0.3, 1 - age / receivedSymbols.length);
 
     // Choose color based on error status
-    const color = symbol.isError ? COLORS.receivedError : COLORS.receivedNormal;
+    const color = symbol.isError ? COLORS.receivedError : COLORS.receivedOK;
 
     // Draw × marker
     ctx.strokeStyle = color;

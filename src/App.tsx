@@ -72,17 +72,33 @@ function App() {
     return (saved === 'light' || saved === 'dark') ? saved : 'dark';
   });
 
+  // Palette state - load from localStorage or default to standard
+  const [palette, setPalette] = useState<'default' | 'colorblind'>(() => {
+    const saved = localStorage.getItem('palette');
+    return (saved === 'default' || saved === 'colorblind') ? saved : 'default';
+  });
+
   // Apply theme to document root and save to localStorage
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
 
+  // Apply palette to document root and save to localStorage
+  useEffect(() => {
+    document.documentElement.setAttribute('data-palette', palette);
+    localStorage.setItem('palette', palette);
+  }, [palette]);
+
   // Toggle theme function
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
+  // Toggle palette function
+  const togglePalette = () => {
+    setPalette(prev => prev === 'default' ? 'colorblind' : 'default');
+  };
   // Initialize the simulation hook with default settings
   const {
     state,
@@ -105,9 +121,52 @@ function App() {
   const maxSnr = useMemo(() => getMaxUsefulSnr(state.scheme), [state.scheme]);
 
   // Clamp current SNR if it exceeds the new max when scheme changes
-  if (state.snrDb > maxSnr) {
-    setSnrDb(maxSnr);
-  }
+  useEffect(() => {
+    if (state.snrDb > maxSnr) {
+      setSnrDb(maxSnr);
+    }
+  }, [state.snrDb, maxSnr, setSnrDb]);
+
+  // Keyboard shortcuts for accessibility
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target) {
+        const tag = target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable) {
+          return;
+        }
+      }
+
+      if (event.code === 'Space') {
+        event.preventDefault();
+        state.isPlaying ? pause() : play();
+        return;
+      }
+
+      if (event.key === 's' || event.key === 'S') {
+        if (!state.isPlaying) {
+          step();
+        }
+        return;
+      }
+
+      if (event.key === 'r' || event.key === 'R') {
+        reset();
+        return;
+      }
+
+      if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+        event.preventDefault();
+        const delta = event.key === 'ArrowUp' ? 0.5 : -0.5;
+        const next = Math.min(maxSnr, Math.max(-5, state.snrDb + delta));
+        setSnrDb(next);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [state.isPlaying, state.snrDb, maxSnr, play, pause, step, reset, setSnrDb]);
 
   return (
     <div
@@ -146,6 +205,22 @@ function App() {
             </div>
             <div className="flex items-center gap-3">
               <ThemeToggle theme={theme} onToggle={toggleTheme} />
+              <button
+                onClick={togglePalette}
+                className={`px-3 py-2 rounded-lg font-medium text-sm transition-all duration-150 ${
+                  palette === 'colorblind'
+                    ? 'bg-amber-600 hover:bg-amber-500 text-white'
+                    : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
+                }`}
+                title={palette === 'colorblind'
+                  ? 'Switch to default color palette'
+                  : 'Switch to color-blind safe palette'}
+                aria-label={palette === 'colorblind'
+                  ? 'Switch to default color palette'
+                  : 'Switch to color-blind safe palette'}
+              >
+                {palette === 'colorblind' ? 'Palette: Safe' : 'Palette: Default'}
+              </button>
               <Link
                 to="/dig-deeper"
                 className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium transition-colors text-white"
@@ -176,7 +251,7 @@ function App() {
           }}
           aria-labelledby="start-here-heading"
         >
-          <h2 id="start-here-heading" className="text-lg font-bold text-cyan-400 mb-2">▶ Start Here</h2>
+          <h2 id="start-here-heading" className="text-lg font-bold text-cyan-400 mb-2">Start Here</h2>
           <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
             Choose a <strong className="text-cyan-400">modulation scheme</strong> (BPSK, QPSK, 8-PSK, 16-QAM, or 64-QAM) and adjust the <strong className="text-cyan-400">SNR (Eb/N0)</strong> to see how noise affects performance.
             Press <strong className="text-green-400">Play</strong> to start transmitting symbols and watch the <strong>constellation diagram</strong> scatter due to noise.
@@ -266,6 +341,8 @@ function App() {
           simulatedBER={currentBER}
           theoreticalBER={theoreticalBER}
           isPlaying={state.isPlaying}
+          snrMin={-5}
+          snrMax={maxSnr}
         />
 
         {/* ============================================================= */}
@@ -330,7 +407,7 @@ function App() {
                 simulated BER converges to theoretical values.
               </p>
               <p className="mt-2">
-                Developed by Bhaskar Krishnamachari with Claude Code, January 2026
+                Developed by Bhaskar Krishnamachari with Claude Code and OpenAI Codex, January 2026
               </p>
             </div>
           </div>

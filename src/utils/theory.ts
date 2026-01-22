@@ -296,7 +296,8 @@ export function generateTheoreticalBERCurve(
   scheme: ModulationScheme,
   snrMin: number = 0,
   snrMax: number = 20,
-  numPoints: number = 100
+  numPoints: number = 100,
+  includeAll: boolean = false
 ): Array<{ snrDb: number; ber: number }> {
   const points: Array<{ snrDb: number; ber: number }> = [];
   const step = (snrMax - snrMin) / (numPoints - 1);
@@ -305,8 +306,8 @@ export function generateTheoreticalBERCurve(
     const snrDb = snrMin + i * step;
     const ber = theoreticalBER(scheme, snrDb);
 
-    // Only include points where BER is reasonable (> 10^-8)
-    if (ber > 1e-8) {
+    // Optionally filter very small BER values for display purposes
+    if (includeAll || ber > 1e-8) {
       points.push({ snrDb, ber });
     }
   }

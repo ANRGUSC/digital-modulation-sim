@@ -24,10 +24,14 @@
 import React from 'react';
 import type { ModulationScheme } from '../types';
 import { BITS_PER_SYMBOL } from '../types';
+import { simulateBerAtSnr } from '../utils/sweep';
 
 // =============================================================================
 // COMPONENT PROPS
 // =============================================================================
+
+const SWEEP_BITS_PER_POINT = 20000;
+const SWEEP_STEP_DB = 1;
 
 interface StatisticsPanelProps {
   /** Current modulation scheme */
@@ -46,6 +50,10 @@ interface StatisticsPanelProps {
   theoreticalBER: number;
   /** Whether simulation is currently running */
   isPlaying: boolean;
+  /** Minimum SNR for sweep */
+  snrMin: number;
+  /** Maximum SNR for sweep */
+  snrMax: number;
 }
 
 // =============================================================================
@@ -158,10 +166,14 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
   simulatedBER,
   theoreticalBER,
   isPlaying,
+  snrMin,
+  snrMax,
 }) => {
   const bitsPerSymbol = BITS_PER_SYMBOL[scheme];
   const sampleQuality = getSampleSizeQuality(errorCount, bitCount);
   const accuracy = getAccuracyAssessment(simulatedBER, theoreticalBER, errorCount);
+  const [isSweeping, setIsSweeping] = React.useState(false);
+  const [sweepProgress, setSweepProgress] = React.useState<string | null>(null);
 
   /**
    * Calculate ratio of simulated to theoretical BER.
@@ -170,6 +182,55 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
   const berRatio = theoreticalBER > 0 && simulatedBER > 0
     ? (simulatedBER / theoreticalBER).toFixed(2)
     : 'N/A';
+
+  const runSweepAndExport = async () => {
+    if (isSweeping || isPlaying) return;
+    setIsSweeping(true);
+    setSweepProgress('Preparing sweep...');
+
+    const snrStep = SWEEP_STEP_DB;
+    const bitsPerPoint = SWEEP_BITS_PER_POINT;
+    const points: Array<ReturnType<typeof simulateBerAtSnr>> = [];
+
+    const snrValues: number[] = [];
+    for (let snr = snrMin; snr <= snrMax + 1e-6; snr += snrStep) {
+      snrValues.push(Math.round(snr * 10) / 10);
+    }
+
+    for (let i = 0; i < snrValues.length; i++) {
+      const snr = snrValues[i];
+      setSweepProgress(`Sweeping ${snr.toFixed(1)} dB (${i + 1}/${snrValues.length})...`);
+      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+      points.push(simulateBerAtSnr(scheme, snr, bitsPerPoint));
+    }
+
+    const header = ['scheme', 'snr_db', 'theoretical_ber', 'simulated_ber', 'bit_count', 'error_count'];
+    const rows = points.map((p) => ([
+      scheme,
+      p.snrDb.toFixed(1),
+      p.theoreticalBER.toExponential(6),
+      p.simulatedBER.toExponential(6),
+      p.bitCount.toString(),
+      p.errorCount.toString(),
+    ]));
+
+    const csv = [header.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `ber_sweep_${scheme}_${timestamp}.csv`;
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    setSweepProgress(null);
+    setIsSweeping(false);
+  };
 
   return (
     <div
@@ -287,6 +348,27 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
         should converge to ~1.0 with enough samples. With 100+ errors, expect ratio between 0.8-1.2.
         Ratios far from 1.0 may indicate insufficient samples or simulation issues.
       </div>
+
+      {/* SNR sweep export */}
+      <div className="mt-4 pt-3 border-t flex flex-col md:flex-row md:items-center md:justify-between gap-3" style={{ borderColor: 'var(--bg-border)' }}>
+        <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
+          Export a BER sweep for the selected scheme (SNR {snrMin} to {snrMax} dB, {SWEEP_STEP_DB} dB steps, {bitsPerPointLabel()} per point).
+          {sweepProgress && <span className="ml-2 text-cyan-400">{sweepProgress}</span>}
+        </div>
+        <button
+          onClick={runSweepAndExport}
+          disabled={isSweeping || isPlaying}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            isSweeping || isPlaying
+              ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+              : 'bg-cyan-600 hover:bg-cyan-500 text-white'
+          }`}
+          title={isPlaying ? 'Pause the simulation to run a sweep' : 'Run SNR sweep and export CSV'}
+          aria-label="Run SNR sweep and export CSV"
+        >
+          {isSweeping ? 'Sweeping...' : 'Run SNR Sweep + Export CSV'}
+        </button>
+      </div>
     </div>
   );
 };
@@ -323,5 +405,9 @@ const StatBox: React.FC<StatBoxProps> = ({
     <div className={`text-xs ${subtextClass}`}>{subtext}</div>
   </div>
 );
+
+function bitsPerPointLabel(): string {
+  return `${SWEEP_BITS_PER_POINT.toLocaleString()} bits`;
+}
 
 export default StatisticsPanel;

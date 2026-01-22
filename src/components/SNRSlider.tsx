@@ -83,6 +83,13 @@ export const SNRSlider: React.FC<SNRSliderProps> = ({
 
   const quality = getQualityIndicator(value);
 
+  const presets = [
+    { label: 'Low', value: 0 },
+    { label: 'Medium', value: 8 },
+    { label: 'High', value: 14 },
+    { label: 'Very High', value: 20 },
+  ].filter((preset) => preset.value >= min && preset.value <= max);
+
   return (
     <div
       className="rounded-lg p-4 border transition-colors"
@@ -153,6 +160,33 @@ export const SNRSlider: React.FC<SNRSliderProps> = ({
         <span>|</span>
         <span>{max} dB</span>
       </div>
+
+      {/* Preset buttons */}
+      {presets.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {presets.map((preset) => {
+            const isActive = Math.abs(value - preset.value) < 0.01;
+            return (
+              <button
+                key={preset.label}
+                onClick={() => onChange(preset.value)}
+                disabled={disabled}
+                className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                  disabled
+                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                    : isActive
+                      ? 'bg-cyan-600 text-white'
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                }`}
+                title={`Set SNR to ${preset.value} dB`}
+                aria-pressed={isActive}
+              >
+                {preset.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Educational note */}
       <div className="mt-3 text-xs" style={{ color: 'var(--text-muted)' }}>

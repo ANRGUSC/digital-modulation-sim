@@ -94,8 +94,8 @@ const QUESTIONS: Question[] = [
   {
     id: 7,
     type: 'tf',
-    question: 'To achieve a BER of 10⁻⁵, 64-QAM requires approximately 6 dB higher Eb/N0 than QPSK.',
-    hint: 'Verify: Find where each BER curve crosses 10⁻⁵ on the BER plot',
+    question: 'To achieve a BER of 10^-5, 64-QAM requires approximately 6 dB higher Eb/N0 than QPSK.',
+    hint: 'Verify: Find where each BER curve crosses 10^-5 on the BER plot',
     correctAnswer: 'True',
   },
   {
@@ -122,9 +122,9 @@ const QUESTIONS: Question[] = [
     id: 10,
     type: 'mcq',
     question: "If you've transmitted 50,000 bits and observed 50 bit errors, what is the simulated BER?",
-    options: ['10⁻²', '10⁻³', '10⁻⁴', '10⁻⁵'],
+    options: ['10^-2', '10^-3', '10^-4', '10^-5'],
     hint: 'Verify: Run simulation until ~50,000 bits and check the statistics panel calculation',
-    correctAnswer: 'B) 10⁻³',
+    correctAnswer: 'B) 10^-3',
   },
 ];
 
@@ -244,7 +244,7 @@ export const Quiz: React.FC = () => {
 
       if (submitted) {
         if (userAnswer) {
-          content += correct ? ' ✓ CORRECT' : ' ✗ INCORRECT';
+          content += correct ? ' CORRECT' : ' INCORRECT';
         }
         if (!correct) {
           content += `\n    Correct Answer: ${q.correctAnswer}`;
@@ -285,7 +285,7 @@ export const Quiz: React.FC = () => {
               to="/"
               className="inline-flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition-colors"
             >
-              <span>←</span>
+              <span>{'<-'}</span>
               <span>Back to Simulator</span>
             </Link>
           </div>
@@ -331,7 +331,7 @@ export const Quiz: React.FC = () => {
           </div>
           <div className="mt-3 text-sm text-slate-500">
             Progress: <span className="text-cyan-400">{answeredCount}</span> / {QUESTIONS.length} questions answered
-            <span className="ml-2 text-slate-600">• Answers auto-saved</span>
+            <span className="ml-2 text-slate-600">- Answers auto-saved</span>
           </div>
 
           {/* Score display after submission */}
@@ -471,7 +471,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, answer, onAnswer,
       {/* Question number and text */}
       <div className="flex gap-3 mb-4">
         <span className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${getBadgeClass()}`}>
-          {submitted && isAnswered ? (isCorrect ? '✓' : '✗') : question.id}
+          {submitted && isAnswered ? (isCorrect ? 'OK' : 'X') : question.id}
         </span>
         <div className="flex-1">
           <div className="flex items-center gap-2">
@@ -500,7 +500,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, answer, onAnswer,
                 className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${getOptionClass(opt)} ${submitted ? 'cursor-default' : ''}`}
               >
                 {opt}
-                {submitted && question.correctAnswer === opt && ' ✓'}
+                {submitted && question.correctAnswer === opt && ' OK'}
               </button>
             ))}
           </div>
@@ -518,7 +518,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, answer, onAnswer,
                 >
                   <span className="font-medium mr-2">{letter}.</span>
                   {opt}
-                  {submitted && question.correctAnswer === optionValue && ' ✓'}
+                  {submitted && question.correctAnswer === optionValue && ' OK'}
                 </button>
               );
             })}
@@ -528,7 +528,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, answer, onAnswer,
         {/* Hint - show always when enabled, or show for incorrect answers after submission */}
         {(showHint || (submitted && !isCorrect && isAnswered)) && (
           <div className={`mt-3 text-xs italic ${submitted && !isCorrect ? 'text-yellow-400' : 'text-slate-500'}`}>
-            💡 {question.hint}
+            Hint: {question.hint}
           </div>
         )}
       </div>

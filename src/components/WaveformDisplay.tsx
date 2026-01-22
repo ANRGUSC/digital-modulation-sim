@@ -103,16 +103,18 @@ export const WaveformDisplay: React.FC<WaveformDisplayProps> = ({
   const rxCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // Theme state - track changes to trigger canvas redraw
-  const [theme, setTheme] = React.useState(() =>
-    document.documentElement.getAttribute('data-theme') || 'dark'
-  );
+  const [theme, setTheme] = React.useState(() => {
+    const doc = document.documentElement;
+    return `${doc.getAttribute('data-theme') || 'dark'}|${doc.getAttribute('data-palette') || 'default'}`;
+  });
 
   // Listen for theme changes
   React.useEffect(() => {
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
-        if (mutation.attributeName === 'data-theme') {
-          setTheme(document.documentElement.getAttribute('data-theme') || 'dark');
+        if (mutation.attributeName === 'data-theme' || mutation.attributeName === 'data-palette') {
+          const doc = document.documentElement;
+          setTheme(`${doc.getAttribute('data-theme') || 'dark'}|${doc.getAttribute('data-palette') || 'default'}`);
         }
       });
     });

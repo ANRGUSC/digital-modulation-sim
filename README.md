@@ -222,7 +222,7 @@ For commercial licensing inquiries, please contact the author.
 University of Southern California
 EE597 - Wireless Networks
 
-Developed with Claude Code, January 2026
+Developed with Claude Code and OpenAI Codex, January 2026
 
 ## Acknowledgments
 

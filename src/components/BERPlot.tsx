@@ -32,7 +32,7 @@
  * @author Bhaskar Krishnamachari (USC), developed with Claude Code
  */
 
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import {
   Line,
   XAxis,
@@ -80,21 +80,8 @@ const PLOT_SNR_MIN = -5;
 const PLOT_SNR_MAX = 20;
 
 // Colors for each scheme (active state)
-const SCHEME_COLORS: Record<ModulationScheme, string> = {
-  'BPSK': '#22c55e',    // Green
-  'QPSK': '#3b82f6',    // Blue
-  '8-PSK': '#a855f7',   // Purple
-  '16-QAM': '#f97316',  // Orange
-  '64-QAM': '#ef4444',  // Red
-};
-
-// Colors
-const COLORS = {
-  theoretical: '#22c55e',   // Green (for current scheme)
-  simulated: '#eab308',     // Yellow/Gold
-  currentSnr: '#ef4444',    // Red
-  grid: '#334155',
-  inactive: '#475569',      // Faint gray for inactive schemes
+const getCSSVar = (name: string): string => {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#94a3b8';
 };
 
 // =============================================================================
@@ -115,6 +102,36 @@ export const BERPlot: React.FC<BERPlotProps> = ({
   snrMin: _snrMin,  // Ignored - using fixed range
   snrMax: _snrMax,  // Ignored - using fixed range
 }) => {
+  // Track theme/palette changes so colors update
+  const [styleVersion, setStyleVersion] = useState(0);
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'data-theme' || mutation.attributeName === 'data-palette') {
+          setStyleVersion((v) => v + 1);
+        }
+      });
+    });
+    observer.observe(document.documentElement, { attributes: true });
+    return () => observer.disconnect();
+  }, []);
+
+  const schemeColors: Record<ModulationScheme, string> = useMemo(() => ({
+    'BPSK': getCSSVar('--color-scheme-bpsk'),
+    'QPSK': getCSSVar('--color-scheme-qpsk'),
+    '8-PSK': getCSSVar('--color-scheme-8psk'),
+    '16-QAM': getCSSVar('--color-scheme-16qam'),
+    '64-QAM': getCSSVar('--color-scheme-64qam'),
+  }), [styleVersion]);
+
+  const colors = useMemo(() => ({
+    theoretical: getCSSVar('--color-theoretical'),
+    simulated: getCSSVar('--color-simulated'),
+    currentSnr: getCSSVar('--color-current-snr'),
+    grid: getCSSVar('--color-grid'),
+    inactive: getCSSVar('--color-inactive-curve'),
+  }), [styleVersion]);
+
   /**
    * Generate theoretical BER curves for ALL schemes.
    * This allows showing faint comparison curves in the background.
@@ -122,7 +139,7 @@ export const BERPlot: React.FC<BERPlotProps> = ({
   const allCurvesData = useMemo(() => {
     const curves: Record<ModulationScheme, Array<{ snrDb: number; ber: number }>> = {} as any;
     for (const s of MODULATION_SCHEMES) {
-      curves[s] = generateTheoreticalBERCurve(s, PLOT_SNR_MIN, PLOT_SNR_MAX, 50);
+      curves[s] = generateTheoreticalBERCurve(s, PLOT_SNR_MIN, PLOT_SNR_MAX, 50, true);
     }
     return curves;
   }, []);
@@ -139,12 +156,15 @@ export const BERPlot: React.FC<BERPlotProps> = ({
       };
       // Add BER for each scheme
       for (const s of MODULATION_SCHEMES) {
-        dataPoint[s] = allCurvesData[s][idx]?.ber ?? null;
+        const rawBer = allCurvesData[s][idx]?.ber ?? null;
+        dataPoint[s] = rawBer !== null && rawBer >= 1e-6 ? rawBer : null;
       }
       // Add simulated point at the matching SNR
-      dataPoint.simulated = Math.abs(point.snrDb - currentSnrDb) < 0.5 && simulatedBER
-        ? simulatedBER
-        : null;
+      if (Math.abs(point.snrDb - currentSnrDb) < 0.5 && simulatedBER !== null) {
+        dataPoint.simulated = simulatedBER >= 1e-6 ? simulatedBER : null;
+      } else {
+        dataPoint.simulated = null;
+      }
       return dataPoint;
     });
   }, [allCurvesData, scheme, currentSnrDb, simulatedBER]);
@@ -154,12 +174,12 @@ export const BERPlot: React.FC<BERPlotProps> = ({
    */
   const formatBERTick = (value: number): string => {
     if (value === 1) return '1';
-    if (value === 0.1) return '10⁻¹';
-    if (value === 0.01) return '10⁻²';
-    if (value === 0.001) return '10⁻³';
-    if (value === 0.0001) return '10⁻⁴';
-    if (value === 0.00001) return '10⁻⁵';
-    if (value === 0.000001) return '10⁻⁶';
+    if (value === 0.1) return '10^-1';
+    if (value === 0.01) return '10^-2';
+    if (value === 0.001) return '10^-3';
+    if (value === 0.0001) return '10^-4';
+    if (value === 0.00001) return '10^-5';
+    if (value === 0.000001) return '10^-6';
     return value.toExponential(0);
   };
 
@@ -221,7 +241,7 @@ export const BERPlot: React.FC<BERPlotProps> = ({
             data={chartData}
             margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} />
+            <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
 
             {/* X Axis - Linear SNR scale */}
             <XAxis
@@ -270,13 +290,13 @@ export const BERPlot: React.FC<BERPlotProps> = ({
             {/* Vertical reference line at current SNR */}
             <ReferenceLine
               x={currentSnrDb}
-              stroke={COLORS.currentSnr}
+              stroke={colors.currentSnr}
               strokeDasharray="5 5"
               strokeWidth={2}
               label={{
                 value: `${currentSnrDb.toFixed(1)} dB`,
                 position: 'top',
-                fill: COLORS.currentSnr,
+                fill: colors.currentSnr,
                 fontSize: 10,
               }}
             />
@@ -288,9 +308,9 @@ export const BERPlot: React.FC<BERPlotProps> = ({
                 type="monotone"
                 dataKey={s}
                 name={s}
-                stroke={COLORS.inactive}
+                stroke={colors.inactive}
                 strokeWidth={1}
-                strokeOpacity={0.4}
+                strokeOpacity={0.6}
                 dot={false}
                 activeDot={false}
                 legendType="none"
@@ -302,17 +322,17 @@ export const BERPlot: React.FC<BERPlotProps> = ({
               type="monotone"
               dataKey={scheme}
               name={`${scheme} (Theoretical)`}
-              stroke={SCHEME_COLORS[scheme]}
+              stroke={schemeColors[scheme]}
               strokeWidth={2.5}
               dot={false}
-              activeDot={{ r: 4, fill: SCHEME_COLORS[scheme] }}
+              activeDot={{ r: 4, fill: schemeColors[scheme] }}
             />
 
             {/* Simulated BER point */}
             <Scatter
               dataKey="simulated"
               name="Simulated"
-              fill={COLORS.simulated}
+              fill={colors.simulated}
               shape="circle"
             />
           </ComposedChart>
@@ -324,20 +344,20 @@ export const BERPlot: React.FC<BERPlotProps> = ({
         <div className="flex items-center gap-2">
           <div
             className="w-4 h-0.5 rounded"
-            style={{ backgroundColor: SCHEME_COLORS[scheme] }}
+            style={{ backgroundColor: schemeColors[scheme] }}
           />
           <span style={{ color: 'var(--text-muted)' }}>{scheme} (selected)</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-0.5 bg-slate-500 rounded opacity-40" />
+          <div className="w-4 h-0.5 rounded opacity-40" style={{ backgroundColor: colors.inactive }} />
           <span style={{ color: 'var(--text-muted)' }}>Other schemes</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-yellow-500 rounded-full" />
+          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.simulated }} />
           <span style={{ color: 'var(--text-muted)' }}>Simulated BER</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-0.5 border-t-2 border-dashed border-red-500" />
+          <div className="w-4 h-0.5 border-t-2 border-dashed" style={{ borderColor: colors.currentSnr }} />
           <span style={{ color: 'var(--text-muted)' }}>Current SNR</span>
         </div>
       </div>
